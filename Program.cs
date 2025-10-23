@@ -1,4 +1,6 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using Microsoft.OpenApi.Models;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
@@ -7,24 +9,29 @@ builder.Services.AddScoped<LabSoftwareLicense.Repository.LicenseRepository>();
 
 // ✅ Swagger services
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "License API",
+        Version = "v1"
+    });
+});
 
 var app = builder.Build();
 
+// Enable Swagger only in Development
+
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "License API V1");
+        c.RoutePrefix = string.Empty; // Makes Swagger UI load at root URL
+    });
+
+
 app.UseHttpsRedirection();
-
-// If you use auth:
-// app.UseAuthentication();
 app.UseAuthorization();
-
-// Swagger (Dev or Prod)
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-    c.RoutePrefix = "swagger"; // URL: /swagger
-});
-
 app.MapControllers();
 
 app.Run();

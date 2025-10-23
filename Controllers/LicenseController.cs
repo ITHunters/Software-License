@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using LabSoftwareLicense.DTO;
 using LabSoftwareLicense.Repository;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LabSoftwareLicense.Controllers
 {
@@ -18,6 +19,13 @@ namespace LabSoftwareLicense.Controllers
         public ActionResult<List<Model.License>> GetAll()
         {
             var licenses = _licenseRepository.GetAllLicenses();
+            return Ok(licenses);
+        }
+
+        [HttpPost("GetCompanyLicense")]
+        public ActionResult<List<Model.License>> GetCompanyLicense([FromBody] LicenseRequest request)
+        {
+            var licenses = _licenseRepository.GetSpecificCompanyLicenses(request.CompanyName, request.SoftwareType);
             return Ok(licenses);
         }
     }
