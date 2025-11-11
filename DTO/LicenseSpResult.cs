@@ -1,36 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace LabSoftwareLicense.Model
+﻿namespace LabSoftwareLicense.DTO
 {
-    public class License
+    public class LicenseSpResult
     {
-        [Key]
         public int LicenseId { get; set; }
-
-        [MaxLength(150)]
         public string CompanyName { get; set; }
-
-        [MaxLength(250)]
         public string Address { get; set; }
-
-        [MaxLength(50)]
         public string CellNumber { get; set; }
-
         public bool isActive { get; set; }
-
-        [MaxLength(100)]
         public string Created_By { get; set; }
-
         public DateTime Created_On { get; set; }
-
         public DateTime ExpiryDate { get; set; }
-
-        [MaxLength(100)]
         public string SoftwareType { get; set; }
-
-        [MaxLength(500)]
         public string ClientMessage { get; set; }
-
+        public string ExpiryStatus { get; set; }
     }
 }

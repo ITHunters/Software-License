@@ -1,87 +1,47 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.ComponentModel;
-using System.Data.SqlClient;
+﻿using LabSoftwareLicense.Data;
+using LabSoftwareLicense.DTO;
+using LabSoftwareLicense.Model;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace LabSoftwareLicense.Repository
 {
     public class LicenseRepository
     {
-        private readonly string _connectionString;
-        public LicenseRepository(IConfiguration configuration) {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        private readonly LicenseDbContext _context;
+
+        public LicenseRepository(LicenseDbContext context)
+        {
+            _context = context;
         }
 
-        // ✅ Get all licenses
-        [Obsolete]
-        public List<Model.License> GetAllLicenses()
+        // ✅ Get all active licenses
+        public async Task<List<License>> GetAllLicensesAsync()
         {
-            var licenses = new List<Model.License>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            {
-                string query = "SELECT * FROM [dbo].[License] Where isActive = 1";
-
-                SqlCommand cmd = new SqlCommand(query, conn);
-                conn.Open();
-
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    var license = new Model.License
-                    {
-                        LicenseId =  Convert.ToInt32(reader["LicenseId"]),
-                        CompanyName = reader["CompanyName"] != DBNull.Value ? reader["CompanyName"].ToString() : string.Empty,
-                        Address = reader["Address"] != DBNull.Value ? reader["Address"].ToString() : string.Empty,
-                        CellNumber = reader["CellNumber"] != DBNull.Value ? reader["CellNumber"].ToString() : string.Empty,
-                     };
-
-                    licenses.Add(license);
-                }
-            }
-
-            return licenses;
+            return await _context.Licenses
+                                 .Where(l => l.isActive)
+                                 .ToListAsync();
         }
 
-        // ✅ Get Specific Company licenses
-        [Obsolete]
-        public List<Model.License> GetSpecificCompanyLicenses(String CompanyName, String SoftwareType)
+        // ✅ Get specific company licenses
+        public async Task<List<LicenseSpResult>> GetSpecificCompanyLicensesAsync(string companyName, string softwareType)
         {
-            var licenses = new List<Model.License>();
+              return await _context.LicenseSpResults
+                            .FromSqlRaw("EXEC sp_GetSpecficCompanyLicense @CompanyName={0}, @SoftwareType={1}", companyName, softwareType)
+                            .ToListAsync();
+        }
 
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            {
-                string query = "sp_GetSpecficCompanyLicense'" + CompanyName +"', '"+ SoftwareType +"'";
+        // ✅ Optional: Add or Update License
+        public async Task AddOrUpdateAsync(License license)
+        {
+            if (license.LicenseId == 0)
+                _context.Licenses.Add(license);
+            else
+                _context.Licenses.Update(license);
 
-                SqlCommand cmd = new SqlCommand(query, conn);
-                conn.Open();
-
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    var license = new Model.License
-                    {
-                        LicenseId = Convert.ToInt32(reader["LicenseId"]),
-
-                        CompanyName = reader["CompanyName"] != DBNull.Value ? reader["CompanyName"].ToString() : string.Empty,
-
-                        Address = reader["Address"] != DBNull.Value ? reader["Address"].ToString() : string.Empty,
-
-                        CellNumber = reader["CellNumber"] != DBNull.Value ? reader["CellNumber"].ToString() : string.Empty,
-
-                        ClientMessage = reader["ClientMessage"] != ssDBNull.Value ? reader["ClientMessage"].ToString() : string.Empty,
-
-                        SoftwareType = reader["SoftwareType"] != DBNull.Value ? reader["SoftwareType"].ToString() : string.Empty,
-
-                        ExpiryStatus = reader["ExpiryStatus"] != DBNull.Value ? reader["ExpiryStatus"].ToString() : string.Empty,
-
-                        isActive = Convert.ToBoolean(reader["isActive"].ToString())
-                    };
-
-                    licenses.Add(license);
-                }
-            }
-
-            return licenses;
+            await _context.SaveChangesAsync();
         }
     }
 }

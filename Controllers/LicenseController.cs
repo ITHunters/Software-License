@@ -2,31 +2,28 @@
 using LabSoftwareLicense.Repository;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LabSoftwareLicense.Controllers
+[ApiController]
+[Route("api/[controller]")]
+public class LicenseController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class LicenseController : ControllerBase
+    private readonly LicenseRepository _repo;
+
+    public LicenseController(LicenseRepository repo)
     {
-        private readonly LicenseRepository _licenseRepository;
-
-        public LicenseController(LicenseRepository licenseRepository)
-        {
-            _licenseRepository = licenseRepository;
-        }
-
-        [HttpGet]
-        public ActionResult<List<Model.License>> GetAll()
-        {
-            var licenses = _licenseRepository.GetAllLicenses();
-            return Ok(licenses);
-        }
-
-        [HttpPost("GetCompanyLicense")]
-        public ActionResult<List<Model.License>> GetCompanyLicense([FromBody] LicenseRequest request)
-        {
-            var licenses = _licenseRepository.GetSpecificCompanyLicenses(request.CompanyName, request.SoftwareType);
-            return Ok(licenses);
-        }
+        _repo = repo;
     }
-}   
+
+    [HttpPost("GetCompanyLicense")]
+    public async Task<IActionResult> GetCompanyLicense([FromBody] LicenseRequest request)
+    {
+        var licenses = await _repo.GetSpecificCompanyLicensesAsync(request.CompanyName, request.SoftwareType);
+        return Ok(licenses);
+    }
+
+    [HttpGet("GetAll")]
+    public async Task<IActionResult> GetAll()
+    {
+        var all = await _repo.GetAllLicensesAsync();
+        return Ok(all);
+    }
+}
